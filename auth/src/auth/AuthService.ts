@@ -35,5 +35,21 @@ export const AuthService = {
     logout: () => {
         // clear token from localStorage
         localStorage.removeItem('user');
-    }
-}
+    },
+
+    isAuthenticated: (): boolean => {
+        const token = localStorage.getItem('user');
+        return !!token;
+    },
+
+    getUserRoles: (): string[] => {
+        const token = localStorage.getItem('user');
+        if (token) {
+            const decodedToken = jwt.decode(token);
+            if (decodedToken) {
+                // return decodedToken.roles || [];
+            }
+        }
+        return [];
+    },
+};
