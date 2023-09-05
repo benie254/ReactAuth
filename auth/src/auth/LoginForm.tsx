@@ -11,6 +11,7 @@ const LoginForm: React.FC = () => {
         email: "",
         password: ""
     });
+    const [error, setError] = useState<string | null>(null);
 
     function handleChange(event: any){
         const {name, value} = event.target
@@ -19,12 +20,16 @@ const LoginForm: React.FC = () => {
                 ...prevLoginFormData, [name]: value
             }
         });
+        if (!loginFormData.email || !loginFormData.password) {
+            setError('Please fill in all fields.');
+            return;
+        }
     }
 
     const handleLogin = async (event: any) => {
         try {
             event.preventDefault();
-            const token = await AuthService.login(loginFormData.email, loginFormData.password);
+            const decodedToken = await AuthService.login(loginFormData.email, loginFormData.password);
             // store the token in local storage or state & navigate to the protected route
         } catch (error) {
             console.error('Login failed: ', error);
@@ -34,6 +39,7 @@ const LoginForm: React.FC = () => {
     return (
         <div>
             <h2>Login</h2>
+            {error && <p>{error}</p>}
             <form onSubmit={handleLogin}>
                 <input 
                     type="text" 
