@@ -18,6 +18,7 @@ const SignupForm: React.FC = () => {
         password: "",
         password2: ""
     });
+    const [error, setError] = useState<string | null>(null);
 
     function handleChange(event: any){
         const {name, value} = event.target
@@ -26,6 +27,10 @@ const SignupForm: React.FC = () => {
                 ...prevRegFormData, [name]: value
             }
         });
+        if (!regFormData.first_name || !regFormData.last_name || !regFormData.username || !regFormData.email || !regFormData.password || !regFormData.password2) {
+            setError('Please fill in all fields.');
+            return;
+        }
     }
 
     const handleSignup = async (event: any) => {
@@ -39,6 +44,7 @@ const SignupForm: React.FC = () => {
     return (
         <div>
             <h2>Sign Up</h2>
+            {error && <p>{error}</p>}
             <form onSubmit={handleSignup}>
                 <input 
                     type="text" 
