@@ -1,5 +1,4 @@
 import { useState } from "react";
-import { AuthService } from "./AuthService";
 
 interface RegInput {
     email: string;
