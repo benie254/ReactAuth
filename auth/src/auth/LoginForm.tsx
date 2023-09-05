@@ -1,13 +1,30 @@
 import { useState } from "react";
 import { AuthService } from "./AuthService";
 
-const LoginForm: React.FC = () => {
-    const [email, setEmail] = useState('');
-    const [password, setPassword] = useState('');
+interface LoginInput {
+    email: string;
+    password: string;
+}
 
-    const handleLogin = async () => {
+const LoginForm: React.FC = () => {
+    const [loginFormData, setLoginFormData] = useState<LoginInput>({
+        email: "",
+        password: ""
+    });
+
+    function handleChange(event: any){
+        const {name, value} = event.target
+        setLoginFormData(prevLoginFormData => {
+            return {
+                ...prevLoginFormData, [name]: value
+            }
+        });
+    }
+
+    const handleLogin = async (event: any) => {
         try {
-            const token = await AuthService.login(email, password);
+            event.preventDefault();
+            const token = await AuthService.login(loginFormData.email, loginFormData.password);
             // store the token in local storage or state & navigate to the protected route
         } catch (error) {
             console.error('Login failed: ', error);
@@ -17,19 +34,21 @@ const LoginForm: React.FC = () => {
     return (
         <div>
             <h2>Login</h2>
-            <input 
-                type="text" 
-                placeholder="Email..."
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-            />
-            <input 
-                type="text" 
-                placeholder="Password..."
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-            />
-            <button onClick={handleLogin}>Login</button>
+            <form onSubmit={handleLogin}>
+                <input 
+                    type="text" 
+                    placeholder="Email..."
+                    value={loginFormData.email}
+                    onChange={handleChange}
+                />
+                <input 
+                    type="text" 
+                    placeholder="Password..."
+                    value={loginFormData.password}
+                    onChange={handleChange}
+                />
+                <button>Login</button>
+            </form>
         </div>
     )
 }
