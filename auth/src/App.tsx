@@ -1,7 +1,9 @@
+import { MyRoutes } from "./MyRoutes"
+
 function App() {
   return (
     <>
-    <h1>Works</h1>
+    <MyRoutes />
     </>
   )
 }

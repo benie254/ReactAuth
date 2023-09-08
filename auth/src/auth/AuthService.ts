@@ -1,55 +1,100 @@
 import axios from "axios";
-import jwt, { JwtPayload } from 'jsonwebtoken';
+import { useEffect, useState } from "react";
+import { useNavigate } from "react-router-dom";
 
-const API_URL = "https://ben-in-ke-backend-nvp1.vercel.app/api/";
-const SECRET_KEY = '';
+// const API_URL = "https://ben-in-ke-backend-nvp1.vercel.app/api/";
 
+interface LoginUser {
+    email: string;
+    password: string;
+}
 
-export const AuthService = {
-    signup: async (username: string, email: string, first_name: string, last_name: string, password: string): Promise<void> => {
+interface RegUser {
+    username: string;
+    email: string;
+    password: string;
+    password2: string;
+    first_name: string;
+    last_name: string;
+}
+
+interface MyUser {
+    token: string;
+    email: string;
+    username: string;
+    first_name: string;
+    last_name: string;
+    id: number;
+    is_staff: boolean;
+    is_superuser: boolean;
+}
+
+export function useAuthentication() {
+    const API_URL = "http://127.0.0.1:8000/api";
+    const navigate = useNavigate();
+    const [currentUser, setCurrentUser] = useState<MyUser | null>({
+        token: "",
+        username: "",
+        first_name: "",
+        last_name: "",
+        id: 0,
+        email: "",
+        is_staff: false,
+        is_superuser: false
+    });
+
+    useEffect(() => {
+        const myUser = localStorage.getItem('user');
+        const accessToken = myUser && JSON.parse(myUser);
+        if (accessToken) {
+            setCurrentUser(accessToken);
+        }
+    }, []);
+
+    const signup = async (UserData: RegUser): Promise<void> => {
         try {
-            const response = await axios.post(`${API_URL}/user/auth/register`, {username, email, first_name, last_name, password});
+            const response = await axios.post(`${API_URL}/user/auth/register`, {UserData});
             return response.data;
         } catch (error) {
             throw error;
         }
-    },
+    }
 
-    login: async (email: string, password: string): Promise<string | JwtPayload | null> => {
+    const login = async (userData: LoginUser): Promise<string | null> => {
         try {
-            const response = await axios.post(`${API_URL}/user/auth/login`, {email, password});
-            const { token } = response.data;
+            const response = await fetch(`${API_URL}/user/auth/login`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify(userData),
+            });
 
-            // verify & decode the token
-            const decodedToken = jwt.verify(token, SECRET_KEY);
-
-            // store the token in localStorage
-            localStorage.setItem('user', token);
-
-            return decodedToken;
+            if (response.ok) {
+                const user = await response.json();
+                localStorage.setItem('user', JSON.stringify(user));
+                setCurrentUser(user);
+                navigate('/home');
+                return user;
+            } else {
+                throw new Error('Login failed');
+            }
         } catch (error) {
+            console.error('Login error: ', error);
             throw error;
         }
-    },
+    }
 
-    logout: () => {
-        // clear token from localStorage
+    const logout = () => {
         localStorage.removeItem('user');
-    },
+        setCurrentUser(null);
+        navigate('/login');
+    }
 
-    isAuthenticated: (): boolean => {
-        const token = localStorage.getItem('user');
-        return !!token;
-    },
-
-    getUserRoles: (): string[] => {
-        const token = localStorage.getItem('user');
-        if (token) {
-            const decodedToken = jwt.decode(token);
-            if (decodedToken) {
-                // return decodedToken.roles || [];
-            }
-        }
-        return [];
-    },
+    return {
+        currentUser,
+        login,
+        signup,
+        logout,
+    }
 };

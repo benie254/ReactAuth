@@ -1,17 +1,21 @@
 import { useState } from "react";
-import { AuthService } from "./AuthService";
+import { useAuthentication } from "./AuthService";
+import { useNavigate } from "react-router-dom";
 
 interface LoginInput {
     email: string;
     password: string;
 }
 
-const LoginForm: React.FC = () => {
+function LoginForm () {
+    const { login }  = useAuthentication();
     const [loginFormData, setLoginFormData] = useState<LoginInput>({
         email: "",
         password: ""
     });
     const [error, setError] = useState<string | null>(null);
+    const navigate = useNavigate();
+    
 
     function handleChange(event: any){
         const {name, value} = event.target
@@ -27,11 +31,13 @@ const LoginForm: React.FC = () => {
     }
 
     const handleLogin = async (event: any) => {
+        event.preventDefault();
         try {
-            event.preventDefault();
-            const decodedToken = await AuthService.login(loginFormData.email, loginFormData.password);
+            await login(loginFormData);
             // store the token in local storage or state & navigate to the protected route
+            navigate('/', { replace: true });
         } catch (error) {
+            setError("Login failed");
             console.error('Login failed: ', error);
         }
     };
@@ -43,11 +49,13 @@ const LoginForm: React.FC = () => {
             <form onSubmit={handleLogin}>
                 <input 
                     type="text" 
+                    name="email"
                     placeholder="Email..."
                     value={loginFormData.email}
                     onChange={handleChange}
                 />
                 <input 
+                    name="password"
                     type="text" 
                     placeholder="Password..."
                     value={loginFormData.password}
