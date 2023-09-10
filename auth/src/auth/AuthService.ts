@@ -2,7 +2,6 @@ import axios from "./Interceptor";
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import Cookies  from 'universal-cookie';
-import { useCookies } from 'react-cookie'
 
 // const API_URL = "https://ben-in-ke-backend-nvp1.vercel.app/api/";
 const cookies = new Cookies(null, { sameSite: 'strict', secure: true });
@@ -115,16 +114,12 @@ export function useAuthentication() {
 
     const logout = async (): Promise<void> => {
         try {
-            const response = await fetch(`${API_URL}/user/auth/logout`, {
+            await fetch(`${API_URL}/user/auth/logout`, {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
                 },
             });
-
-            if (response.ok){
-                const msg = response.json();
-            }
 
             // clear token & user data regardless of fetch response status
             cookies.remove('Token');
