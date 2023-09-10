@@ -1,8 +1,11 @@
-import axios from "axios";
+import axios from "./Interceptor";
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
+import Cookies  from 'universal-cookie';
+import { useCookies } from 'react-cookie'
 
 // const API_URL = "https://ben-in-ke-backend-nvp1.vercel.app/api/";
+const cookies = new Cookies(null, { sameSite: 'strict', secure: true });
 
 interface LoginUser {
     email: string;
@@ -44,21 +47,47 @@ export function useAuthentication() {
     });
 
     useEffect(() => {
-        const myUser = localStorage.getItem('user');
-        const accessToken = myUser && JSON.parse(myUser);
-        if (accessToken) {
-            setCurrentUser(accessToken);
-        }
+        const fetchUser = async () => {
+            const user = await getUserInfo();
+            if (user){
+                setCurrentUser(user);
+            }
+        };
+        fetchUser();
     }, []);
 
     const signup = async (UserData: RegUser): Promise<void> => {
         try {
-            const response = await axios.post(`${API_URL}/user/auth/register`, {UserData});
-            return response.data;
+            await axios.post(`${API_URL}/user/auth/register`, {UserData}).then(
+                (response) => {
+                    return response.data;
+                }
+            );
         } catch (error) {
             throw error;
         }
     }
+
+    const getUserInfo = async (): Promise<MyUser | null> => {
+        try {
+            const token = cookies.get('Token');
+            if(!token){
+                return null;
+            }
+
+            const response = await axios.get(`${API_URL}/user/profile`);
+
+            if (response.status === 200) {
+                const user = response.data;
+                return user;
+            } else {
+                throw new Error('Failed to fetch user info');
+            }
+        } catch (error) {
+            console.error('User info fetch error: ', error);
+            throw error;
+        }
+    };
 
     const login = async (userData: LoginUser): Promise<string | null> => {
         try {
@@ -71,11 +100,10 @@ export function useAuthentication() {
             });
 
             if (response.ok) {
-                const user = await response.json();
-                localStorage.setItem('user', JSON.stringify(user));
-                setCurrentUser(user);
+                const token = await response.json();
+                cookies.set('Token', token);
                 navigate('/home');
-                return user;
+                return null;
             } else {
                 throw new Error('Login failed');
             }
@@ -85,10 +113,28 @@ export function useAuthentication() {
         }
     }
 
-    const logout = () => {
-        localStorage.removeItem('user');
-        setCurrentUser(null);
-        navigate('/login');
+    const logout = async (): Promise<void> => {
+        try {
+            const response = await fetch(`${API_URL}/user/auth/logout`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+            });
+
+            if (response.ok){
+                const msg = response.json();
+            }
+
+            // clear token & user data regardless of fetch response status
+            cookies.remove('Token');
+            setCurrentUser(null);
+
+            // navigate to login page
+            navigate('/login');
+        } catch (error) {
+            console.error('Logout error: ', error);
+        }
     }
 
     return {
